@@ -47,6 +47,52 @@
     color: rgba(190, 210, 255, .45); letter-spacing: .05em;
     pointer-events: none; transition: opacity 1.2s ease; opacity: 1;
   }
+  /* 文字逐行淡入 */
+  #text > .title { opacity: 0; animation: fadeUp 1.3s cubic-bezier(.2,.7,.2,1) forwards; }
+  #text > .poem {
+    margin-top: .5em;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Source Han Sans SC", sans-serif;
+    font-weight: 300; letter-spacing: .16em; line-height: 2.0;
+    color: rgba(216, 229, 255, .74);
+    text-shadow: 0 0 16px rgba(120, 160, 255, .45);
+  }
+  #text > .poem > div { opacity: 0; animation: fadeUp 1.5s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); filter: blur(2px); }
+    to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+  }
+
+  /* 音乐开关 */
+  #musicBtn {
+    position: absolute; right: 2.4%; top: 3%;
+    display: inline-flex; align-items: center; gap: .5em;
+    padding: .45em 1em; border-radius: 999px;
+    border: 1px solid rgba(180, 205, 255, .22);
+    background: rgba(10, 16, 30, .5);
+    color: rgba(222, 232, 255, .85);
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    letter-spacing: .12em; cursor: pointer; white-space: nowrap;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    transition: border-color .35s ease, box-shadow .35s ease, background .35s ease, color .35s ease;
+  }
+  #musicBtn:hover { border-color: rgba(190, 215, 255, .55); box-shadow: 0 0 20px rgba(120, 160, 255, .35); }
+  #musicBtn.on { color: #eaf1ff; border-color: rgba(190, 215, 255, .5); background: rgba(40, 58, 100, .55); box-shadow: 0 0 22px rgba(120, 160, 255, .4); }
+  #musicBtn .ico { font-size: 1.05em; opacity: .9; }
+  #musicBtn.off-hint .ico { animation: notePulse 2.4s ease-in-out infinite; }
+  @keyframes notePulse {
+    0%, 100% { opacity: .45; transform: scale(.96); }
+    50%      { opacity: 1;   transform: scale(1.06); }
+  }
+
+  /* 底部落款 */
+  #text > .sign {
+    margin-top: .9em;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    letter-spacing: .3em; color: rgba(198, 214, 246, .46);
+    text-shadow: 0 0 18px rgba(110, 150, 255, .25);
+    opacity: 0; animation: fadeUp 1.5s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+
   #fallback {
     position: absolute; inset: 0; display: none; place-content: center;
     color: #9db4e0; font: 14px/1.8 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
@@ -61,7 +107,8 @@
     <canvas id="snow"></canvas>
     <div id="vignette"></div>
     <div id="text"></div>
-    <div id="hint">双击切换全屏</div>
+    <button id="musicBtn" type="button" aria-label="音乐开关"><span class="ico">♪</span><span class="lbl">圣诞音乐</span></button>
+    <div id="hint">点击任意处开启音乐 · 双击切换全屏</div>
     <div id="fallback">当前浏览器不支持 WebGL，请更新浏览器或开启硬件加速后重试。</div>
   </div>
 </div>
@@ -74,6 +121,12 @@
   const CFG = {
     title: "Merry Christmas",   // 第一行文字
     name:  "祝圣诞节快乐 天天开心",             // 第二行文字（改这里就能换成你的名字）
+    poem: [                                   // 名字下面的三行小祝福（随便改）
+      "愿雪落轻一点，日子暖一点。",
+      "愿你想要的，都在来的路上。",
+      "愿你笑的次数，比去年多一点。"
+    ],
+    footer: "圣诞快乐 · 万事胜意",              // 底部落款
     treePoints:   50000,        // 树体粒子
     groundPoints: 4000,         // 地面光环
     starPoints:   1200,         // 空中星点
@@ -277,6 +330,7 @@
   const snowCanvas = document.getElementById("snow");
   const textEl = document.getElementById("text");
   const hintEl = document.getElementById("hint");
+  const musicBtn = document.getElementById("musicBtn");
 
   const gl = glCanvas.getContext("webgl", {
     alpha: false, antialias: true, depth: true, premultipliedAlpha: false,
@@ -291,11 +345,31 @@
 
   /* ---- 文字 ---- */
   const line1 = document.createElement("div");
+  line1.className = "title";
   line1.textContent = CFG.title;
+  line1.style.animationDelay = "0.2s";
   const line2 = document.createElement("div");
+  line2.className = "title";
   line2.textContent = CFG.name;
+  line2.style.animationDelay = "1.1s";
   textEl.appendChild(line1);
   textEl.appendChild(line2);
+
+  const poemEl = document.createElement("div");
+  poemEl.className = "poem";
+  (CFG.poem || []).forEach(function (s, i) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    d.style.animationDelay = (1.9 + i * 0.5) + "s";
+    poemEl.appendChild(d);
+  });
+  textEl.appendChild(poemEl);
+
+  const signEl = document.createElement("div");
+  signEl.className = "sign";
+  signEl.textContent = CFG.footer;
+  signEl.style.animationDelay = "3.4s";
+  textEl.appendChild(signEl);
 
   /* ---- WebGL 资源 ---- */
   const prog = gl.createProgram();
@@ -434,7 +508,10 @@
     line1.style.fontSize = fs + "px";
     line2.style.fontSize = fs + "px";
     textEl.style.gap = (10 * k) + "px";
+    poemEl.style.fontSize = Math.max(11, 22 * k) + "px";
     hintEl.style.fontSize = Math.max(10, 12 * k) + "px";
+    signEl.style.fontSize = Math.max(9, 13 * k) + "px";
+    musicBtn.style.fontSize = Math.max(10, 13 * k) + "px";
 
     updateSnow(0);
     drawSnow();
@@ -488,6 +565,171 @@
     rafHandle = requestAnimationFrame(frame);
   }
 
+  /* ==================== 圣诞配乐（Web Audio 实时合成，无需外部音频文件） ==================== */
+  const Music = (function () {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    let ctx = null, master = null, noise = null, timer = 0;
+    let nextBar = 0, barIdx = 0, on = false;
+    const BPM = 76, BEAT = 60 / BPM, BAR = BEAT * 4;
+    // 和声走向：F - C - Dm - Bb（温暖、像音乐盒）
+    const CH = [
+      [349.23, 440.00, 523.25],
+      [261.63, 329.63, 392.00],
+      [293.66, 349.23, 440.00],
+      [233.08, 293.66, 349.23]
+    ];
+
+    function init() {
+      if (!AC) return false;
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = 0.0001;
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 4800; lp.Q.value = 0.6;
+      master.connect(lp); lp.connect(ctx.destination);
+
+      // 雪橇铃噪声
+      const len = Math.floor(ctx.sampleRate * 0.22);
+      noise = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.8);
+      }
+      return true;
+    }
+
+    // 铃铛音：基频 + 高频泛音，指数衰减
+    function bell(t, freq, gain, dur) {
+      const o1 = ctx.createOscillator(), g1 = ctx.createGain();
+      o1.type = "sine"; o1.frequency.value = freq;
+      g1.gain.setValueAtTime(0.0001, t);
+      g1.gain.linearRampToValueAtTime(gain, t + 0.01);
+      g1.gain.exponentialRampToValueAtTime(gain * 0.0012, t + dur);
+      o1.connect(g1); g1.connect(master);
+      o1.start(t); o1.stop(t + dur + 0.06);
+
+      const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+      o2.type = "sine"; o2.frequency.value = freq * 2.006;
+      g2.gain.setValueAtTime(0.0001, t);
+      g2.gain.linearRampToValueAtTime(gain * 0.5, t + 0.01);
+      g2.gain.exponentialRampToValueAtTime(gain * 0.0008, t + dur * 0.55);
+      o2.connect(g2); g2.connect(master);
+      o2.start(t); o2.stop(t + dur);
+    }
+
+    function pad(t, freq, gain, dur) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(gain, t + dur * 0.4);
+      g.gain.exponentialRampToValueAtTime(gain * 0.001, t + dur);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + dur + 0.05);
+    }
+
+    function jingle(t, gain) {
+      const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = noise;
+      f.type = "bandpass"; f.frequency.value = 6200; f.Q.value = 1.1;
+      g.gain.setValueAtTime(gain, t);
+      g.gain.exponentialRampToValueAtTime(0.0006, t + 0.19);
+      s.connect(f); f.connect(g); g.connect(master);
+      s.start(t); s.stop(t + 0.22);
+    }
+
+    function bar(t) {
+      const c = CH[barIdx % CH.length];
+      pad(t, c[0], 0.032, BAR * 1.02);
+      pad(t, c[2], 0.018, BAR * 1.02);
+
+      // 音乐盒式琶音
+      const seq = [0, 1, 2, 1, 0, 2, 1, 2];
+      for (let i = 0; i < seq.length; i++) {
+        bell(t + i * (BEAT / 2), c[seq[i]] * 2, 0.05, 0.52);
+      }
+      // 旋律点缀
+      bell(t + BEAT * 1.5, c[2] * 2, 0.072, 0.90);
+      bell(t + BEAT * 3.0, c[1] * 2, 0.058, 0.82);
+      // 雪橇铃
+      for (let i = 0; i < 4; i++) jingle(t + i * BEAT + 0.04, 0.03);
+      jingle(t + BAR - 0.2, 0.045);
+
+      barIdx++;
+    }
+
+    function tick() {
+      const horizon = ctx.currentTime + 1.8;
+      while (nextBar < horizon) {
+        bar(nextBar);
+        nextBar += BAR;
+      }
+    }
+
+    function start() {
+      if (!ctx && !init()) return false;
+      if (ctx.state === "suspended" && ctx.resume) ctx.resume();
+      if (on) return true;
+      on = true;
+      barIdx = 0;
+      nextBar = ctx.currentTime + 0.3;
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setValueAtTime(Math.max(0.0001, master.gain.value), ctx.currentTime);
+      master.gain.exponentialRampToValueAtTime(0.85, ctx.currentTime + 1.4);
+      tick();
+      timer = setInterval(tick, 150);
+      return true;
+    }
+
+    function stop() {
+      if (!ctx) return;
+      on = false;
+      if (timer) { clearInterval(timer); timer = 0; }
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+      master.gain.exponentialRampToValueAtTime(0.0008, ctx.currentTime + 0.8);
+    }
+
+    return {
+      start: start,
+      stop: stop,
+      isOn: function () { return on; },
+      state: function () { return ctx ? ctx.state : "none"; }
+    };
+  })();
+
+  /* ---- 音乐按钮 + 首次交互自动起播 ---- */
+  let userMuted = false;
+  function syncBtn(playing) {
+    if (!musicBtn) return;
+    musicBtn.classList.toggle("on", playing);
+    musicBtn.classList.toggle("off-hint", !playing);
+    const lbl = musicBtn.querySelector(".lbl");
+    if (lbl) lbl.textContent = playing ? "音乐播放中" : "圣诞音乐";
+  }
+  function playMusic() {
+    if (Music.isOn()) return;
+    if (Music.start()) syncBtn(true);
+  }
+  function stopMusic() {
+    Music.stop();
+    userMuted = true;
+    syncBtn(false);
+  }
+  if (musicBtn) {
+    musicBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (Music.isOn()) stopMusic(); else playMusic();
+    });
+  }
+  function firstGesture(e) {
+    if (userMuted) return;
+    if (e && e.target && musicBtn && musicBtn.contains(e.target)) return;
+    if (!Music.isOn()) playMusic();
+  }
+  document.addEventListener("pointerdown", firstGesture);
+  document.addEventListener("keydown", firstGesture);
+  syncBtn(false);
+
   /* ==================== 小交互 ==================== */
   document.addEventListener("dblclick", function () {
     const el = document.documentElement;
@@ -503,7 +745,7 @@
   rafHandle = requestAnimationFrame(frame);
 
   // 暴露配置，便于在控制台里临时调（如在 Console 里改 647 → 你的名字后刷新）
-  window.ChristmasTree = { CFG: CFG, parts: parts };
+  window.ChristmasTree = { CFG: CFG, parts: parts, music: Music };
 })();
 </script>
 </body>
