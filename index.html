@@ -730,6 +730,21 @@
   document.addEventListener("keydown", firstGesture);
   syncBtn(false);
 
+  /* 切到后台标签页时暂停（后台计时器限速会让音乐断续），回来自动续播 */
+  let musicPausedByHide = false;
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      if (Music.isOn()) {
+        Music.stop();
+        musicPausedByHide = true;
+        syncBtn(false);
+      }
+    } else if (musicPausedByHide) {
+      musicPausedByHide = false;
+      playMusic();
+    }
+  });
+
   /* ==================== 小交互 ==================== */
   document.addEventListener("dblclick", function () {
     const el = document.documentElement;
