@@ -85,6 +85,14 @@
   }
 
   /* 底部落款 */
+  #text > .signName {
+    margin-top: .5em;
+    font-family: "Monotype Corsiva", "Segoe Script", "Brush Script MT",
+                 "Lucida Handwriting", "Zapf Chancery", "Apple Chancery", cursive;
+    letter-spacing: .2em; color: rgba(238, 245, 255, .8);
+    text-shadow: 0 0 16px rgba(140, 175, 255, .5), 0 0 34px rgba(120, 160, 255, .25);
+    opacity: 0; animation: fadeUp 1.6s cubic-bezier(.2,.7,.2,1) forwards;
+  }
   #text > .sign {
     margin-top: .9em;
     font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -126,7 +134,8 @@
       "愿你想要的，都在来的路上。",
       "愿你笑的次数，比去年多一点。"
     ],
-    footer: "圣诞快乐 · 万事胜意",              // 底部落款
+    footer: "圣诞快乐 · 万事胜意",              // 底部祝福
+    sign:   "马乾舜",                          // 落款（署名）
     treePoints:   50000,        // 树体粒子
     groundPoints: 4000,         // 地面光环
     starPoints:   1200,         // 空中星点
@@ -371,6 +380,12 @@
   signEl.style.animationDelay = "3.4s";
   textEl.appendChild(signEl);
 
+  const signNameEl = document.createElement("div");
+  signNameEl.className = "signName";
+  signNameEl.textContent = "—— " + CFG.sign;
+  signNameEl.style.animationDelay = "4.1s";
+  textEl.appendChild(signNameEl);
+
   /* ---- WebGL 资源 ---- */
   const prog = gl.createProgram();
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VS));
@@ -512,6 +527,7 @@
     hintEl.style.fontSize = Math.max(10, 12 * k) + "px";
     signEl.style.fontSize = Math.max(9, 13 * k) + "px";
     musicBtn.style.fontSize = Math.max(10, 13 * k) + "px";
+    signNameEl.style.fontSize = Math.max(13, 30 * k) + "px";
 
     updateSnow(0);
     drawSnow();
